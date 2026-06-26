@@ -1,7 +1,7 @@
-# SWC Booster
+# SWC-Booster Report Generator
 
-SWC Booster is a tool to improve compilation speed for developers and teams.
+This project generates a local JSON report of build times for SWC-Booster.
 
-## Installation
+## Usage
 
-To install SWC Booster, run the following command:
+To generate a report, run the following command:

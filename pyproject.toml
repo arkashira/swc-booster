@@ -5,7 +5,7 @@ build-backend = "poetry.masonry.api"
 [tool.poetry]
 name = "swc-booster"
 version = "0.1.0"
-description = "SWC Booster"
+description = "SWC-Booster report generator"
 
 [tool.poetry.dependencies]
 python = "^3.8"

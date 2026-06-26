@@ -1,31 +1,42 @@
+import json
+from swc_booster import generate_report, write_report
 import pytest
-from swc_booster import compile_with_swc_booster, CompilationResult
+import os
 
-def test_compile_with_swc_booster_success(tmp_path):
-    input_file = tmp_path / 'input.txt'
-    output_file = tmp_path / 'output.txt'
-    with open(input_file, 'w') as f:
-        f.write('Hello World!')
-    result = compile_with_swc_booster(str(input_file), str(output_file))
-    assert result.success
-    assert result.time_taken > 0
-    with open(output_file, 'r') as f:
-        assert f.read() == 'Hello World!'
+def test_generate_report():
+    report = generate_report(1000, 10, 5, 2)
+    assert report.total_time_ms == 1000
+    assert report.cache_hits == 10
+    assert report.cache_misses == 5
+    assert report.worker_count == 2
 
-def test_compile_with_swc_booster_failure(tmp_path):
-    input_file = tmp_path / 'input.txt'
-    output_file = tmp_path / 'output.txt'
-    with open(input_file, 'w') as f:
-        f.write('Hello World!')
-    # Simulate failure by passing invalid output file
-    result = compile_with_swc_booster(str(input_file), '/invalid/output.txt')
-    assert not result.success
-    assert result.time_taken == 0
+def test_write_report(tmp_path):
+    report = generate_report(1000, 10, 5, 2)
+    report_path = tmp_path / 'build-report.json'
+    write_report(report, str(report_path))
+    with open(report_path, 'r') as f:
+        data = json.load(f)
+        assert data['total_time_ms'] == 1000
+        assert data['cache_hits'] == 10
+        assert data['cache_misses'] == 5
+        assert data['worker_count'] == 2
 
-def test_compile_with_swc_booster_invalid_input(tmp_path):
-    input_file = tmp_path / 'input.txt'
-    output_file = tmp_path / 'output.txt'
-    # Simulate invalid input file
-    result = compile_with_swc_booster('/invalid/input.txt', str(output_file))
-    assert not result.success
-    assert result.time_taken == 0
+def test_write_report_custom_path(tmp_path):
+    report = generate_report(1000, 10, 5, 2)
+    report_path = tmp_path / 'custom-report.json'
+    write_report(report, str(report_path))
+    assert os.path.exists(report_path)
+
+def test_main(tmp_path, monkeypatch):
+    monkeypatch.setenv('PYTHONPATH', str(tmp_path))
+    report_path = tmp_path / 'build-report.json'
+    monkeypatch.setattr('sys.argv', ['swc-booster', '--json', '--report-path', str(report_path), '--total-time-ms', '1000', '--cache-hits', '10', '--cache-misses', '5', '--worker-count', '2'])
+    from swc_booster import main
+    main()
+    assert os.path.exists(report_path)
+    with open(report_path, 'r') as f:
+        data = json.load(f)
+        assert data['total_time_ms'] == 1000
+        assert data['cache_hits'] == 10
+        assert data['cache_misses'] == 5
+        assert data['worker_count'] == 2

@@ -1,41 +1,40 @@
 import argparse
 import json
-import time
 from dataclasses import dataclass
+from typing import Optional
 
 @dataclass
-class CompilationResult:
-    success: bool
-    time_taken: float
+class BuildReport:
+    total_time_ms: int
+    cache_hits: int
+    cache_misses: int
+    worker_count: int
 
-def compile_with_swc_booster(input_file, output_file):
-    """
-    Compile the input file using SWC booster.
+def generate_report(total_time_ms: int, cache_hits: int, cache_misses: int, worker_count: int) -> BuildReport:
+    return BuildReport(total_time_ms, cache_hits, cache_misses, worker_count)
 
-    Args:
-    input_file (str): The input file to compile.
-    output_file (str): The output file to write the compiled result to.
+def write_report(report: BuildReport, report_path: str = 'build-report.json') -> None:
+    with open(report_path, 'w') as f:
+        json.dump({
+            'total_time_ms': report.total_time_ms,
+            'cache_hits': report.cache_hits,
+            'cache_misses': report.cache_misses,
+            'worker_count': report.worker_count
+        }, f, indent=4)
 
-    Returns:
-    CompilationResult: The result of the compilation, including success status and time taken.
-    """
-    start_time = time.time()
-    try:
-        # Simulate compilation process
-        with open(input_file, 'r') as f_in, open(output_file, 'w') as f_out:
-            f_out.write(f_in.read())
-        end_time = time.time()
-        return CompilationResult(True, end_time - start_time)
-    except Exception as e:
-        return CompilationResult(False, 0)
-
-def main():
-    parser = argparse.ArgumentParser(description='SWC Booster')
-    parser.add_argument('input_file', help='Input file to compile')
-    parser.add_argument('output_file', help='Output file to write compiled result to')
+def main() -> None:
+    parser = argparse.ArgumentParser(description='SWC-Booster report generator')
+    parser.add_argument('--report-path', help='Custom output location for the report', default='build-report.json')
+    parser.add_argument('--json', action='store_true', help='Generate report in JSON format')
+    parser.add_argument('--total-time-ms', type=int, help='Total build time in milliseconds', required=True)
+    parser.add_argument('--cache-hits', type=int, help='Number of cache hits', required=True)
+    parser.add_argument('--cache-misses', type=int, help='Number of cache misses', required=True)
+    parser.add_argument('--worker-count', type=int, help='Number of workers', required=True)
     args = parser.parse_args()
-    result = compile_with_swc_booster(args.input_file, args.output_file)
-    print(f'Compilation {"succeeded" if result.success else "failed"} in {result.time_taken:.2f} seconds')
+
+    if args.json:
+        report = generate_report(args.total_time_ms, args.cache_hits, args.cache_misses, args.worker_count)
+        write_report(report, args.report_path)
 
 if __name__ == '__main__':
     main()
